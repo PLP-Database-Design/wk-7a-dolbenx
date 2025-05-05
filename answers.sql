@@ -1,38 +1,19 @@
 1.
--- SQL Query to achieve 1NF by splitting the Products column into individual rows
--- First, let's insert individual rows for each product per order
-
--- Create a temporary table with individual products
-SELECT OrderID, CustomerName, 'Laptop' AS Product
-FROM ProductDetail
-WHERE FIND_IN_SET('Laptop', Products) > 0
-
-UNION ALL
-
-SELECT OrderID, CustomerName, 'Mouse' AS Product
-FROM ProductDetail
-WHERE FIND_IN_SET('Mouse', Products) > 0
-
-UNION ALL
-
-SELECT OrderID, CustomerName, 'Tablet' AS Product
-FROM ProductDetail
-WHERE FIND_IN_SET('Tablet', Products) > 0
-
-UNION ALL
-
-SELECT OrderID, CustomerName, 'Keyboard' AS Product
-FROM ProductDetail
-WHERE FIND_IN_SET('Keyboard', Products) > 0
-
-UNION ALL
-
-SELECT OrderID, CustomerName, 'Phone' AS Product
-FROM ProductDetail
-WHERE FIND_IN_SET('Phone', Products) > 0;
-
-
-
+WITH SplitProducts AS (
+    SELECT 
+        OrderID,
+        CustomerName,
+        JSON_TABLE(
+            CONCAT('["', REPLACE(Products, ',', '","'), '"]'),
+            '$[*]' COLUMNS (Product VARCHAR(100) PATH '$')
+        ) AS jt
+    FROM ProductDetail
+)
+SELECT 
+    OrderID,
+    CustomerName,
+    jt.Product
+FROM SplitProducts;
 
 2.
 -- Create a table to store OrderID and CustomerName
